@@ -25,28 +25,28 @@ class OnepageController extends Controller
         /**
          * If guest checkout is not allowed then redirect back to the cart page
          */
-        if (
-            ! auth()->guard('customer')->check()
-            && ! core()->getConfigData('sales.checkout.shopping_cart.allow_guest_checkout')
-        ) {
-            return redirect()->route('shop.customer.session.index');
-        }
+        // if (
+        //     ! auth()->guard('customer')->check()
+        //     && ! core()->getConfigData('sales.checkout.shopping_cart.allow_guest_checkout')
+        // ) {
+        //     return redirect()->route('shop.customer.session.index');
+        // }
 
-        /**
-         * If user is suspended then redirect back to the cart page
-         */
-        if (auth()->guard('customer')->user()?->is_suspended) {
-            session()->flash('warning', trans('shop::app.checkout.cart.suspended-account-message'));
+        // /**
+        //  * If user is suspended then redirect back to the cart page
+        //  */
+        // if (auth()->guard('customer')->user()?->is_suspended) {
+        //     session()->flash('warning', trans('shop::app.checkout.cart.suspended-account-message'));
 
-            return redirect()->route('shop.checkout.cart.index');
-        }
+        //     return redirect()->route('shop.checkout.cart.index');
+        // }
 
-        /**
-         * If cart has errors then redirect back to the cart page
-         */
-        if (Cart::hasError()) {
-            return redirect()->route('shop.checkout.cart.index');
-        }
+        // /**
+        //  * If cart has errors then redirect back to the cart page
+        //  */
+        // if (Cart::hasError()) {
+        //     return redirect()->route('shop.checkout.cart.index');
+        // }
 
         $cart = Cart::getCart();
 
@@ -54,15 +54,15 @@ class OnepageController extends Controller
          * If cart is has downloadable items and customer is not logged in
          * then redirect back to the cart page
          */
-        if (
-            ! auth()->guard('customer')->check()
-            && (
-                $cart->hasDownloadableItems()
-                || ! $cart->hasGuestCheckoutItems()
-            )
-        ) {
-            return redirect()->route('shop.customer.session.index');
-        }
+        // if (
+        //     ! auth()->guard('customer')->check()
+        //     && (
+        //         $cart->hasDownloadableItems()
+        //         || ! $cart->hasGuestCheckoutItems()
+        //     )
+        // ) {
+        //     return redirect()->route('shop.customer.session.index');
+        // }
 
         return view('shop::checkout.onepage.index', compact('cart'));
     }

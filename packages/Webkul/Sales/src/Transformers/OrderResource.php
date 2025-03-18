@@ -3,6 +3,7 @@
 namespace Webkul\Sales\Transformers;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use Webkul\Customer\Models\Customer;
 
 class OrderResource extends JsonResource
 {
@@ -14,6 +15,11 @@ class OrderResource extends JsonResource
      */
     public function toArray($request)
     {
+
+        if ($this->is_guest == 1) {
+            $test = Customer::where('email',$this->customer_email)->first();
+            $this->customer_id = $test['id'];
+        }
         $shippingInformation = [];
 
         if ($this->haveStockableItems()) {

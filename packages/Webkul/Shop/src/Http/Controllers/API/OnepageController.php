@@ -10,6 +10,7 @@ use Webkul\Payment\Facades\Payment;
 use Webkul\Sales\Repositories\OrderRepository;
 use Webkul\Sales\Transformers\OrderResource;
 use Webkul\Shipping\Facades\Shipping;
+use Webkul\Shop\Http\Controllers\Customer\RegistrationController;
 use Webkul\Shop\Http\Requests\CartAddressRequest;
 use Webkul\Shop\Http\Resources\CartResource;
 
@@ -22,7 +23,9 @@ class OnepageController extends APIController
      */
     public function __construct(
         protected OrderRepository $orderRepository,
-        protected CustomerRepository $customerRepository
+        protected CustomerRepository $customerRepository,
+        // tambahan script registration
+        protected RegistrationController $registrationController
     ) {}
 
     /**
@@ -46,10 +49,11 @@ class OnepageController extends APIController
             ! auth()->guard('customer')->check()
             && ! Cart::getCart()->hasGuestCheckoutItems()
         ) {
-            return new JsonResource([
-                'redirect' => true,
-                'data'     => route('shop.customer.session.index'),
-            ]);
+            $this->registrationController->registrationFromOrder($params);
+            // return new JsonResource([
+            //     'redirect' => true,
+            //     'data'     => route('shop.customer.session.index'),
+            // ]);
         }
 
         if (Cart::hasError()) {

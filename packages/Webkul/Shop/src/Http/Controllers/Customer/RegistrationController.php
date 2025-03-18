@@ -101,6 +101,102 @@ class RegistrationController extends Controller
         return redirect()->route('shop.customer.session.index');
     }
 
+    public function registrationFromOrder($params)
+    {
+        $data = $params['billing'];
+        // Ubah format data agar sesuai dengan yang diharapkan
+        $registrationData = [
+            'first_name' => $data['first_name'],
+            'last_name' => $data['last_name'],
+            'email' => $data['email'],
+            'is_subscribed' => $data['is_subscribed'] ?? false
+        ];
+
+        // Generate password otomatis
+        $password = $this->generate_password(true, 10);
+
+        $customerGroup = core()->getConfigData('customer.settings.create_new_account_options.default_group');
+        $formattedData = array_merge($registrationData, [
+            'password' => bcrypt($password),
+            'password_confirmation' => $password,
+            'api_token' => Str::random(80),
+            'is_verified' => !core()->getConfigData('customer.settings.email.verification'),
+            'customer_group_id' => $this->customerGroupRepository->findOneWhere(['code' => $customerGroup])->id,
+            'channel_id' => core()->getCurrentChannel()->id,
+            'token' => md5(uniqid(rand(), true)),
+            'subscribed_to_news_letter' => (bool)($registrationData['is_subscribed'] ?? false),
+        ]);
+
+        Event::dispatch('customer.registration.before');
+        $customer = $this->customerRepository->create($formattedData);
+
+        if (isset($formattedData['is_subscribed']) && $formattedData['is_subscribed']) {
+            $subscription = $this->subscriptionRepository->findOneWhere(['email' => $formattedData['email']]);
+            if ($subscription) {
+                $this->subscriptionRepository->update([
+                    'customer_id' => $customer->id,
+                ], $subscription->id);
+            } else {
+                Event::dispatch('customer.subscription.before');
+                $subscription = $this->subscriptionRepository->create([
+                    'email' => $formattedData['email'],
+                    'customer_id' => $customer->id,
+                    'channel_id' => core()->getCurrentChannel()->id,
+                    'is_subscribed' => 1,
+                    'token' => uniqid(),
+                ]);
+                Event::dispatch('customer.subscription.after', $subscription);
+            }
+        }
+
+        Event::dispatch('customer.create.after', $customer);
+        Event::dispatch('customer.registration.after', $customer);
+
+        // Simpan password yang digenerate untuk dikirim ke email pelanggan
+        $customer->generated_password = $password;
+
+        // Format respons customer sesuai yang diinginkan
+        $customerResponse = [
+            'first_name' => $customer->first_name,
+            'last_name' => $customer->last_name,
+            'email' => $customer->email,
+            'generated_password' => $password // Jika ingin menyertakan password yang digenerate
+        ];
+
+        if (core()->getConfigData('emails.general.notifications.emails.general.notifications.verification')) {
+            session()->flash('success', trans('shop::app.customers.signup-form.success-verify'));
+        } else {
+            session()->flash('success', trans('shop::app.customers.signup-form.success'));
+        }
+
+        return [
+            $customerResponse
+        ];
+    }
+
+    private function generate_password($addSpecialChars = false, $length = 8)
+    {
+        $alphabet = "abcdefghijklmnopqrstuwxyzABCDEFGHIJKLMNOPQRSTUWXYZ0123456789";
+        $specialChars = "@*%&!-_";
+        $pass = [];
+        $alphaLength = strlen($alphabet) - 1;
+
+        for ($i = 0; $i < $length; $i++) {
+            $n = rand(0, $alphaLength);
+            $pass[] = $alphabet[$n];
+        }
+
+        // Tambahkan karakter khusus jika diminta
+        if ($addSpecialChars) {
+            $specialCharsLength = strlen($specialChars) - 1;
+            $randomPos = rand(0, count($pass) - 1);
+            $n = rand(0, $specialCharsLength);
+            $pass[$randomPos] = $specialChars[$n];
+        }
+
+        return implode('', $pass);
+    }
+
     /**
      * Method to verify account.
      *

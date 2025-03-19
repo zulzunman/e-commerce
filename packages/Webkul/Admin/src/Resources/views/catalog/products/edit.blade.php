@@ -167,7 +167,14 @@
                                     <x-admin::seo />
                                 @endif
 
-                                @foreach ($customAttributes as $attribute)
+                                @php
+                                    // Filter custom attributes collection to exclude items with index 4 to 7
+                                    $filteredCustomAttributes = $customAttributes->filter(function ($item, $key) {
+                                        return !in_array($key, [4, 5, 6, 7]);
+                                    });
+                                @endphp
+                                <!-- Dalam foreach dibawah valiabel customAttributes diganti dengan variabel filteredCustomAttributes -->
+                                @foreach ($filteredCustomAttributes as $attribute)
                                     {!! view_render_event("bagisto.admin.catalog.product.edit.form.{$group->code}.controls.before", ['product' => $product]) !!}
 
                                     <x-admin::form.control-group class="last:!mb-0">

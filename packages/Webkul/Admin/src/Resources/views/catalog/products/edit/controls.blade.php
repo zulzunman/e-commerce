@@ -72,7 +72,7 @@
 
         @break
     @case('select')
-        <x-admin::form.control-group.control
+        <!-- <x-admin::form.control-group.control
             type="select"
             :id="$attribute->code"
             :name="$attribute->code"
@@ -98,7 +98,7 @@
                     {{ $option->admin_name ?? $option->name }}
                 </option>
             @endforeach
-        </x-admin::form.control-group.control>
+        </x-admin::form.control-group.control> -->
 
         @break
     @case('multiselect')
